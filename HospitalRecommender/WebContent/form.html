@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="US-ASCII">
+        <title>Hospitals near you</title>
+         <style type="text/css">
+       
+      body{
+      
+      	
+		background: url("http://a.rgbimg.com/cache1s6IGK/users/x/xy/xymonau/300/nrmoM6g.jpg") no-repeat center center fixed; 
+ 		 -webkit-background-size: cover;
+  		-moz-background-size: cover;
+  		-o-background-size: cover;
+  		background-size: cover;
+
+     }
+     h3 {
+     font-size : 25px;
+     font-family: cursive;
+     }
+     
+
+    </style>
+         <script type="text/javascript">
+    //<![CDATA[
+    
+		
+		/*
+		 * Returns a function that waits for the specified XMLHttpRequest
+		 * to complete, then passes its XML response
+		 * to the given handler function.
+		 * req - The XMLHttpRequest whose state is changing
+		 * responseXmlHandler - Function to pass the XML response to
+		 */
+		function getCallbackFunction(req, processData) {
+			 
+		
+		  // Return an anonymous function that listens to the 
+		  // XMLHttpRequest instance
+		  return function () {
+		
+		    // If the request's status is "complete"
+		    if (req.readyState == 4) {
+		      if (req.status == 200) {
+		
+		        // Pass the XML payload of the response to the 
+		        // handler function
+		        
+		        var propertiesXml =req.responseText; 
+		        propertiesXml = propertiesXml.replace(/^\s+|\s+$/g,'');
+		        var parser = new DOMParser();                   
+                var xmlDoc;                 
+                   try {
+                	  xmlDoc = parser.parseFromString (propertiesXml, "text/xml");
+                   }
+                        
+                     catch (e) {
+                        alert ("XML parsing error.");
+                        return false;
+                    }
+		        processData(xmlDoc);
+		
+		      } else {
+		
+		        // An HTTP problem has occurred
+		        alert("HTTP error: "+req.status);
+		      }
+		    }
+		  }
+		}
+		
+		function getNodeValue(element) {
+		   var value = "";
+		   if ((element != null) && (element.firstChild != null)) {
+		       value = element.firstChild.nodeValue;
+		   }
+		   return value;
+		}
+			
+				
+    //]]>
+    </script>
+      <script type="text/javascript" src="//maps.googleapis.com/maps/api/js?key=AIzaSyC2wtw0Kj9fVbAEGXXEKcVEDQjQMdacKn8&sensor=false"></script>
+        <script type="text/javascript">
+      //<![CDATA[
+                 
+                var markers = [];
+                 
+        		function initialize() {
+         		
+	                var map = new google.maps.Map(
+	        		document.getElementById('map'), {
+	          		center: new google.maps.LatLng(37.3344, -121.8811),
+	         		 zoom: 10,
+	         		 mapTypeId: google.maps.MapTypeId.ROADMAP
+	      			});
+	
+	      			var marker = new google.maps.Marker({
+	           	    position: new google.maps.LatLng(37.3344, -121.8811),
+	           		map: map
+	      			});          
+       		 }
+        
+     
+		  	   function loadCities() {
+		  		 	setAllMap(null);
+	        	  	 markers = [];
+	        	  	 var code = document.getElementById("zipCode").value;
+	        	  	 code = code.trim();
+	        	  	 alert(code);
+				 	 var request=new XMLHttpRequest();
+			     	 request.open("GET", "/HospitalRecommender/SimpleServeletJavaPath?zipcode="+code, true);
+				  	 request.onreadystatechange = getCallbackFunction(request, processCityData);
+			     	 request.send(null); 
+		 	 }
+		  
+		  /**
+		   * Process the city list in XML form, store it in cityMarkers, 
+		   * and display the markers.
+		   */			  
+		  	  function processCityData(xmlDoc) {
+	          		cityMarkers = xmlDoc.documentElement.getElementsByTagName("org.nimmi.jspTrials.hospitalList");	
+	          		displayCityMarkers();
+		 	 }
+		  
+		  	function displayCityMarkers() {
+	          //map.clearOverlays();
+	          		var mapOptions = {
+			          			center: new google.maps.LatLng(33.925454,-87.78949),
+			          			zoom: 4,
+			         	 		mapTypeId: google.maps.MapTypeId.ROADMAP
+			        			};
+				      var map = new google.maps.Map(document.getElementById("map"), mapOptions);
+			           
+	          		for (var i = 0; i < cityMarkers.length; i++) {
+	            // obtain the attribues of each marker
+	            	var lat = parseFloat(cityMarkers[i].getElementsByTagName("lat")[0].firstChild.nodeValue);
+	            	var lng = parseFloat(cityMarkers[i].getElementsByTagName("lon")[0].firstChild.nodeValue);
+	            	var address = cityMarkers[i].getElementsByTagName("addr")[0].firstChild.nodeValue;
+	            	var hospitalName = cityMarkers[i].getElementsByTagName("name")[0].firstChild.nodeValue;
+	            	var city = cityMarkers[i].getElementsByTagName("city")[0].firstChild.nodeValue;
+	            	var county = cityMarkers[i].getElementsByTagName("county")[0].firstChild.nodeValue;
+	            	var state = cityMarkers[i].getElementsByTagName("state")[0].firstChild.nodeValue;
+	            	var zipcode = cityMarkers[i].getElementsByTagName("zip")[0].firstChild.nodeValue;
+	            	var rating1 = cityMarkers[i].getElementsByTagName("rating1")[0].firstChild.nodeValue; 
+	            	var rating2 = cityMarkers[i].getElementsByTagName("rating2")[0].firstChild.nodeValue; 
+	            	var rating3 = cityMarkers[i].getElementsByTagName("rating3")[0].firstChild.nodeValue; 
+	            	//rating1 = rating1 *100;
+	            	var html = '<div><div> Hopital: '
+	            	   + hospitalName
+	            	   +'</div>'
+	            	   +'<div stlyle= "color:green">Address:'
+					   + address + ' , ' + city + ' , ' + county 
+			           +'</div>'
+			           + '<div "color:green"> State: '
+					   + state+ ", Zipcode: "+ zipcode
+			           +'</div>'
+			           + '<div>Percentage Of Users Rated 0-6: '
+					   + rating1
+			           +'</div>'
+			           + '<div>Percentage Of Users Rated 7-8: '
+					   + rating2
+			           +'</div>'
+			           + '<div>Percentage Of Users Rated 9-10: '
+					   + rating3
+			           +'</div></div>';
+			           
+	             	 marker = new google.maps.Marker({
+	                  position: new google.maps.LatLng(lat,lng),
+	                  map: map
+	                });
+	              	//marker.id = id;
+	              	attachMessage(marker, html)
+	              	markers.push(marker);
+	              
+	          	}
+	          	setAllMap(map);
+		  	}
+	          
+	       // Sets the map on all markers in the array.
+	        function setAllMap(map) {
+	            	for (var i = 0; i < markers.length; i++) {
+	              		markers[i].setMap(map);
+	            	}
+	         }
+
+	        function clearMarkers(){
+	        	  setAllMap(null);
+	        	  markers = [];
+	          }
+	          
+	        function attachMessage(marker, html) {  
+	        	   var infowindow = new google.maps.InfoWindow({
+	        	   content: html
+	        	  });
+
+	        	  google.maps.event.addListener(marker, 'click', function() {
+	        	  infowindow.open(marker.get('map'), marker);
+	        	  });
+	          }
+			  	      
+		  google.maps.event.addDomListener(window, 'load', initialize);
+        //]]>
+        </script>
+</head>
+<body>
+<h3 style="text-align:center;"> Find My Nearest Hospitals </h3>
+<div style = "position:absolute; left:100px;right:100px ;top:100px;bottom:0px">
+<div>
+My Location Zipcode : <input id="zipCode" style="width:150px" title="Enter you zipcode here">
+<input onclick="loadCities();" type=button value="Find"></div>
+<div>
+<div id="map" style="position:absolute; left:0px;right:0px ;top:50px;bottom : 20px"></div> 
+</div>
+</div>
+
+</body>
+</html>
