@@ -95,7 +95,8 @@ public class Clusterer {
 		int k =50;
 		String datafile = abspath+"/data/UpdatedDataSet.csv";
 		List<Vector> vectors = getVectorPoints(datafile);
-		double[] latLon = {33.925454,-87.78949};
+		double[] latLon = readCSV.getlatLon(zipcode);
+		//double[] latLon = {33.925454,-87.78949};
 		readCSV rc = null;
 		String state =  readCSV.findCity(latLon);
 
