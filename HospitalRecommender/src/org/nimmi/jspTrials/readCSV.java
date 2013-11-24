@@ -15,8 +15,9 @@ public class readCSV {
 	 * @throws IOException 
 	 * @throws InterruptedException 
 	 */
+	 public static String mypath = "/Users/nimmicv/Documents/workspaceMahout/HospitalRecommender/testData";
 	public static String findCity(double[] latLon) throws IOException, InterruptedException, ClassCastException {
-		 String mypath = "/Users/nimmicv/Documents/workspaceMahout/HospitalRecommender/testData";
+		
 		String state = null; //= "95051";
 		String csvFilename = mypath+"/data/zipcode.csv";
 		CSVReader csvReader = new CSVReader(new FileReader(csvFilename));
@@ -42,6 +43,34 @@ public class readCSV {
 		csvReader.close();
 		return state;
 	}
+	
+	public static double[] getlatLon(String zipcode) throws IOException 
+	{
+		String csvFilename = mypath+"/data/zipcode.csv";
+
+		CSVReader csvReader = new CSVReader(new FileReader(csvFilename));
+		String[] row = null;
+		double[] latLon = new double[2] ;
+
+		//	Writer writer = null;
+		//	Path output = new Path("output");
+	 //   Path clustersIn = new Path(output, "random-seeds");
+			String[] headerLine =csvReader.readNext();
+			while((row = csvReader.readNext()) != null) 
+					{
+					if(row[0].equalsIgnoreCase(zipcode))
+					{
+						//System.out.println(Double.parseDouble(row[3]));
+						latLon[0]=Double.parseDouble(row[3]);
+						latLon[1]=Double.parseDouble(row[4]);
+						System.out.println("latitude longitude = " +latLon[0]+ "Lomg = " +latLon[1]);
+						break;
+					}
+					}
+		return latLon;
+	}
+	
+
 	
 
 }
