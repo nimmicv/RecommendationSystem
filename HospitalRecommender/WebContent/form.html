@@ -96,10 +96,10 @@
 	         		 mapTypeId: google.maps.MapTypeId.ROADMAP
 	      			});
 	
-	      			var marker = new google.maps.Marker({
+	      			/*var marker = new google.maps.Marker({
 	           	    position: new google.maps.LatLng(37.3344, -121.8811),
 	           		map: map
-	      			});          
+	      			}); */         
        		 }
         
      
@@ -140,12 +140,22 @@
 	            	var address = cityMarkers[i].getElementsByTagName("addr")[0].firstChild.nodeValue;
 	            	var hospitalName = cityMarkers[i].getElementsByTagName("name")[0].firstChild.nodeValue;
 	            	var city = cityMarkers[i].getElementsByTagName("city")[0].firstChild.nodeValue;
+	            	if(cityMarkers[i].getElementsByTagName("county")[0].firstChild!= null)
+	            		{
 	            	var county = cityMarkers[i].getElementsByTagName("county")[0].firstChild.nodeValue;
+	            		}
 	            	var state = cityMarkers[i].getElementsByTagName("state")[0].firstChild.nodeValue;
 	            	var zipcode = cityMarkers[i].getElementsByTagName("zip")[0].firstChild.nodeValue;
-	            	var rating1 = cityMarkers[i].getElementsByTagName("rating1")[0].firstChild.nodeValue; 
-	            	var rating2 = cityMarkers[i].getElementsByTagName("rating2")[0].firstChild.nodeValue; 
-	            	var rating3 = cityMarkers[i].getElementsByTagName("rating3")[0].firstChild.nodeValue; 
+	            	var child = cityMarkers[i].getElementsByTagName("rating1")[0].firstChild;
+	            	var rating1=0;
+	            	var rating2=0;
+	            	var rating3=0;
+	            	if(child !=null)
+	            		{
+	            		var rating1 = cityMarkers[i].getElementsByTagName("rating1")[0].firstChild.nodeValue; 
+	            		var rating2 = cityMarkers[i].getElementsByTagName("rating2")[0].firstChild.nodeValue; 
+	            		var rating3 = cityMarkers[i].getElementsByTagName("rating3")[0].firstChild.nodeValue; 
+	            		}
 	            	//rating1 = rating1 *100;
 	            	var html = '<div><div> Hopital: '
 	            	   + hospitalName

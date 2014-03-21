@@ -24,6 +24,7 @@ import org.apache.mahout.clustering.Cluster;
 import org.apache.mahout.clustering.iterator.ClusterWritable;
 import org.apache.mahout.clustering.kmeans.KMeansDriver;
 import org.apache.mahout.clustering.kmeans.Kluster;
+import org.apache.mahout.common.distance.CosineDistanceMeasure;
 import org.apache.mahout.common.distance.EuclideanDistanceMeasure;
 import org.apache.mahout.math.RandomAccessSparseVector;
 import org.apache.mahout.math.Vector;
@@ -31,6 +32,7 @@ import org.apache.mahout.math.VectorWritable;
 import org.apache.mahout.clustering.kmeans.Kluster;
 import org.apache.mahout.clustering.kmeans.KMeansDriver;
 import org.apache.mahout.clustering.topdown.postprocessor.ClusterOutputPostProcessorDriver;
+import org.apache.mahout.clustering.canopy.CanopyDriver;
 import org.apache.mahout.clustering.classify.WeightedVectorWritable;
 import org.apache.mahout.math.VectorWritable;
 
@@ -91,11 +93,134 @@ public class Clusterer {
 		return points;
 	}
 	
+	public int findNearestCluster(FileSystem fs, Path path, Configuration conf,Vector newVec) throws Exception
+	{
+		SequenceFile.Reader reader = null;
+		
+		try {
+			reader = new SequenceFile.Reader(fs, path, conf);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+
+			IntWritable key1 = new IntWritable();
+		int nearestPos = 0;
+		double smallestDist=0;
+		int clusterPos = -1;
+		double dist = 0;
+		IntWritable nearestCluster = null ; 
+		
+		ClusterWritable value1 = new ClusterWritable();    
+		while (reader.next(key1, value1))
+		{
+			    System.out.println("Cluster ="+ key1+" Center = "+value1.getValue().getCenter());
+    	
+		    	dist = value1.getValue().getCenter().getDistanceSquared(newVec);
+		    	System.out.println("Cluster ="+ key1+" Center = "+value1.getValue().getCenter() +"Distance =" + dist);
+		    	//System.out.println("Distance ="+ dist);
+		  //  	System.out.println("Cluster = " + value1.getValue().toString()+" Distance = "+ dist);
+		    	if (smallestDist== 0)
+		    	{
+		    		smallestDist = dist;
+		    		nearestCluster = key1;
+		    		clusterPos++;
+		    	}
+		    	else if (dist<= smallestDist)
+		      	{
+		      		smallestDist = dist ;
+		      		 nearestCluster = key1;
+		      		 clusterPos++;
+		      		nearestPos = clusterPos;
+		      		 System.out.println("Nearest Cluster = " +nearestCluster.get() + "ClusterPos =" +clusterPos );
+		      	}
+		    	else
+		    	{
+		    		clusterPos++;
+		    	}
+		      /*System.out.println(value1.getValue().getCenter()+ " ------------ "
+		                + key1.toString());
+		        System.out.println(value1.getValue() + " ------------ "
+            + key1.toString());*/
+
+		}
+		//clusterPos = 27;
+		//nearestCluster = new IntWritable(27);
+		System.out.println("Nearest Cluster = " + nearestPos+ "  distance= " + smallestDist);
+	
+
+		reader.close();
+		return nearestPos;
+	}
+	
+	public int findNearestCluster2(FileSystem fs, Path path, Configuration conf,Vector newVec) throws Exception
+	{
+		SequenceFile.Reader reader = null;
+		
+		try {
+			reader = new SequenceFile.Reader(fs, path, conf);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+
+			Text key1 = new Text();
+		int nearestPos = 0;
+		double smallestDist=0;
+		int clusterPos = -1;
+		double dist = 0;
+Text nearestCluster = null ; 
+		
+		ClusterWritable value1 = new ClusterWritable();    
+		while (reader.next(key1, value1))
+		{
+			    System.out.println("Cluster ="+ key1+" Center = "+value1.getValue().getCenter());
+    	
+		    	dist = value1.getValue().getCenter().getDistanceSquared(newVec);
+		    	System.out.println("Cluster ="+ key1+" Center = "+value1.getValue().getCenter() +"Distance =" + dist);
+		    	//System.out.println("Distance ="+ dist);
+		  //  	System.out.println("Cluster = " + value1.getValue().toString()+" Distance = "+ dist);
+		    	if (smallestDist== 0)
+		    	{
+		    		smallestDist = dist;
+		    		nearestCluster = key1;
+		    		clusterPos++;
+		    	}
+		    	else if (dist<= smallestDist)
+		      	{
+		      		smallestDist = dist ;
+		      		 nearestCluster = key1;
+		      		 clusterPos++;
+		      		nearestPos = clusterPos;
+		      		 System.out.println("Nearest Cluster = " +nearestCluster + "ClusterPos =" +clusterPos );
+		      	}
+		    	else
+		    	{
+		    		clusterPos++;
+		    	}
+		      /*System.out.println(value1.getValue().getCenter()+ " ------------ "
+		                + key1.toString());
+		        System.out.println(value1.getValue() + " ------------ "
+            + key1.toString());*/
+
+		}
+		//clusterPos = 27;
+		//nearestCluster = new IntWritable(27);
+		System.out.println("Nearest Cluster = " + nearestPos+ "  distance= " + smallestDist);
+	
+
+		reader.close();
+		return nearestPos;
+	}
 	public List<hospitalList> findHospitals(String zipcode) throws Exception{
 		int k =50;
 		String datafile = abspath+"/data/UpdatedDataSet.csv";
 		List<Vector> vectors = getVectorPoints(datafile);
 		double[] latLon = readCSV.getlatLon(zipcode);
+		System.out.println("Zipcode = " + zipcode);
+		System.out.println("Latitude = "+latLon[0] +"Longitude =" + latLon[1]);
 		//double[] latLon = {33.925454,-87.78949};
 		readCSV rc = null;
 		String state =  readCSV.findCity(latLon);
@@ -113,6 +238,7 @@ public class Clusterer {
 		List<String> finalLat = new ArrayList<String>();
 		List<String> finalLon = new ArrayList<String>();
 		File outputDir = new File(abspath+"/output");
+		
 		if(!testData.exists())
 		{
 			testData.mkdir();
@@ -134,82 +260,129 @@ public class Clusterer {
 		for (int i =0; i<k; i++)
 		{
 			Vector vec = vectors.get(i);
-			Kluster cluster = new Kluster(vec, i, new EuclideanDistanceMeasure());
+			Kluster cluster = new Kluster(vec, i,new EuclideanDistanceMeasure());
 			writer.append(new Text(cluster.getIdentifier()), cluster);		
 		}
 		writer.close();
 		if(!outputDir.exists())
 		{
-			KMeansDriver.run(conf, new Path(abspath+"/points"), new Path(abspath+"/clusters"), new Path(abspath+"/output"), new EuclideanDistanceMeasure(), 0.001,50, true, 0.0, false);
+			//CanopyDriver.run(conf, new Path(abspath+"/points"), new Path(abspath+"/output"), new EuclideanDistanceMeasure(), 0.7, 0.5, true, 0.0, false);
+			//KMeansDriver.run(conf, new Path(abspath+"/points"), new Path(abspath+"/clusters"), new Path(abspath+"/output"),new EuclideanDistanceMeasure(), 0.001,50, true, 0.0, false);
+			Path input= new Path(abspath+"/output");
+			Path output= new Path(abspath+"/postoutput");
+			ClusterOutputPostProcessorDriver.run(input, output, true);
+			KMeansDriver.run(conf, new Path(abspath+"/points"), new Path(abspath+"/clusters"), new Path(abspath+"/output"),new EuclideanDistanceMeasure(), 0.001,50, true, 0.0, false);
 		}
 		SequenceFile.Reader reader = new SequenceFile.Reader(fs, new Path(abspath+"/output/"+Cluster.CLUSTERED_POINTS_DIR+ "/part-m-00000"), conf);
 		//SequenceFile.Reader reader = new SequenceFile.Reader(fs, new Path( "output/clusters-1/part-r-00000"), conf);
 		IntWritable key = new IntWritable();
 		WeightedVectorWritable value = new WeightedVectorWritable();
-		/*while(reader.next(key, value))
+		while(reader.next(key, value))
 		{
 			System.out.println(value.toString() + " belongs to cluster " +key.toString() );
 		
-		}*/
-		SequenceFile.Reader reader1 = new SequenceFile.Reader(fs, new Path(abspath+"/output/clusters-50-final/part-r-00000"), conf);
-
-		IntWritable key1 = new IntWritable();
-		ClusterWritable value1 = new ClusterWritable();    
-		while (reader1.next(key1, value1))
-		{
-    	
-		    	dist = value1.getValue().getCenter().getDistanceSquared(newVec);
-		  //  	System.out.println("Cluster = " + value1.getValue().toString()+" Distance = "+ dist);
-		    	if (smallestDist== 0)
-		    	{
-		    		smallestDist = dist;
-		    		nearestCluster = key1;
-		    		clusterPos++;
-		    	}
-		    	else if (dist<= smallestDist)
-		      	{
-		      		smallestDist = dist ;
-		      		 nearestCluster = key1;
-		      		 clusterPos++;
-		      	}
-		
-		      /*System.out.println(value1.getValue().getCenter()+ " ------------ "
-		                + key1.toString());
-		        System.out.println(value1.getValue() + " ------------ "
-            + key1.toString());*/
-
 		}
-		System.out.println("Nearest Cluster = " + clusterPos+ "  distance= " + smallestDist);
+//		SequenceFile.Reader reader1 = new SequenceFile.Reader(fs, new Path(abspath+"/output/clusters-50-final/part-r-00000"), conf);
+//
+//		IntWritable key1 = new IntWritable();
+//		int nearestPos = 0;
+//		
+//		ClusterWritable value1 = new ClusterWritable();    
+//		while (reader1.next(key1, value1))
+//		{
+//			    System.out.println("Cluster ="+ key1+" Center = "+value1.getValue().getCenter());
+//    	
+//		    	dist = value1.getValue().getCenter().getDistanceSquared(newVec);
+//		    	System.out.println("Cluster ="+ key1+" Center = "+value1.getValue().getCenter() +"Distance =" + dist);
+//		    	//System.out.println("Distance ="+ dist);
+//		  //  	System.out.println("Cluster = " + value1.getValue().toString()+" Distance = "+ dist);
+//		    	if (smallestDist== 0)
+//		    	{
+//		    		smallestDist = dist;
+//		    		nearestCluster = key1;
+//		    		clusterPos++;
+//		    	}
+//		    	else if (dist<= smallestDist)
+//		      	{
+//		      		smallestDist = dist ;
+//		      		 nearestCluster = key1;
+//		      		 clusterPos++;
+//		      		nearestPos = clusterPos;
+//		      		 System.out.println("Nearest Cluster = " +nearestCluster.get() + "ClusterPos =" +clusterPos );
+//		      	}
+//		    	else
+//		    	{
+//		    		clusterPos++;
+//		    	}
+//		      /*System.out.println(value1.getValue().getCenter()+ " ------------ "
+//		                + key1.toString());
+//		        System.out.println(value1.getValue() + " ------------ "
+//            + key1.toString());*/
+//
+//		}
+//		//clusterPos = 27;
+//		//nearestCluster = new IntWritable(27);
+//		System.out.println("Nearest Cluster = " + nearestPos+ "  distance= " + smallestDist);
 
 		reader.close();
 		Path input= new Path(abspath+"/output");
 
 		Path output= new Path(abspath+"/postoutput");
 
-		// ClusterOutputPostProcessorDriver.run(input, output, true);
+		ClusterOutputPostProcessorDriver.run(input, output, true);
 		FileSystem fso = output.getFileSystem(conf);
 
 		//print cluster2 points
-		SequenceFile.Reader reader2 = new SequenceFile.Reader(fso, new Path(abspath+"/output/"+Cluster.CLUSTERED_POINTS_DIR+ "/part-m-00000"), conf);
-		IntWritable key2 = new IntWritable();
-		WeightedVectorWritable value2 = new WeightedVectorWritable();
+		//SequenceFile.Reader reader2 = new SequenceFile.Reader(fso, new Path(abspath+"/output/"+Cluster.CLUSTERED_POINTS_DIR+ "/part-m-00000"), conf);
+		
+		int nearestPos = findNearestCluster(fs, new Path(abspath+"/output/clusters-50-final/part-r-00000"), conf, newVec);
+		File canopyData = new File(abspath+"/output"+nearestPos);
+		if(!canopyData.exists())
+		{
+			canopyData.mkdir();
+			CanopyDriver.run(conf, new Path(abspath+"/postoutput/"+nearestPos), new Path(abspath+"/output"+nearestPos), new EuclideanDistanceMeasure(), 0.9, 0.1, true, 0.0, false);
+			//canopyData.mkdir();
+			Path input1= new Path(abspath+"/output"+nearestPos);
+			Path output1= new Path(abspath+"/output"+nearestPos+"/postoutput1");
+			ClusterOutputPostProcessorDriver.run(input1, output1, true);
+			//CanopyDriver.run(conf, new Path(abspath+"/postoutput/"+nearestPos), new Path(abspath+"/postoutput/"+nearestPos+"/output"), new EuclideanDistanceMeasure(), 0.7, 0.5, true, 0.0, false);
+		}
+		int nearestPos2 = findNearestCluster2(fs, new Path(abspath+"/output"+nearestPos+"/clusters-0-final/part-r-00000"), conf, newVec);
+		
+		SequenceFile.Reader reader2 = new SequenceFile.Reader(fso, new Path(abspath+"/output"+nearestPos+"/postoutput1/"+nearestPos2+"/part-m-0"), conf);
+		//IntWritable key2 = new IntWritable();
+//		IntWritable key2 = new IntWritable();
+//		WeightedVectorWritable value2 = new WeightedVectorWritable();
+		LongWritable key2 = new LongWritable();
+		VectorWritable value2 = new VectorWritable();
 	
 		while (reader2.next(key2, value2))
 		{
-			if(key2.get()== clusterPos)
-			{
-				finalPoints.add(value2.getVector());	
-      
-			}
+//			if(key2.get()== nearestPos)
+//			{
+//				finalPoints.add(value2.getVector());	
+//      
+//			}
+			System.out.println("String");
+			System.out.println(value2.toString());
+			finalPoints.add(value2.get());
+			System.out.println(finalPoints.size());
       
 		}
 		reader2.close();
 
 		for (int t = 0; t <finalPoints.size();t++)
 		{
-			distC.add(finalPoints.get(t).getDistanceSquared(newVec)) ; 
-			finalLat.add(finalPoints.get(t).toString().substring(3, 11)) ;
-			finalLon.add(finalPoints.get(t).toString().substring(15, 24));
+			distC.add(finalPoints.get(t).getDistanceSquared(newVec)) ;
+			String[] xy = finalPoints.get(t).toString().split(",");
+			String lt = xy[0].split(":")[1];
+			String lng =  xy[1].split(":")[1].split("}")[0];
+			System.out.println("Lat =" + xy[0].split(":")[1]);
+			System.out.println("Lat =" + xy[1].split(":")[1].split("}")[0]);
+			//finalLat.add(finalPoints.get(t).toString().substring(3, 11)) ;
+			//finalLon.add(finalPoints.get(t).toString().substring(15, 24));
+			finalLat.add(lt);
+			finalLon.add(lng);
 			System.out.println("Vector= "+finalPoints.get(t).toString()+ " Distance" +distC.get(t));
 			System.out.println("Latitude = " + finalLat.get(t)+ "Longitude = "+finalLon.get(t));
 		}
@@ -224,10 +397,23 @@ public class Clusterer {
 		{
 			for (int j=0; j<finalPoints.size();j++)
 			{
+				//System.out.println("Checked1");
+				//System.out.println(data[10]);
+				//System.out.println(finalLat.get(j));
+//				if(data[10].contains(finalLat.get(j)))
+//						{
+//					     System.out.println(data[10]);
+//					     System.out.println(finalLat.get(j));
+//					    
+//						}
 				if(data[10].contains(finalLat.get(j)) && data[11].contains(finalLon.get(j))) 
 				{	
-					if(data[5].contentEquals(state) )
-					{
+					//System.out.println("Checked2");
+					//System.out.println(data[5]);
+					//System.out.println(state);
+					//if(data[5].contains(state) )
+					//{
+						//System.out.println("Checked3");
 				
 						hospitalList hl = new hospitalList(data[1],data[2],data[3],data[4],data[5],data[6],data[7],data[8],data[9],data[10],data[11]);
 						pass.add(hl);
@@ -236,7 +422,7 @@ public class Clusterer {
 						System.out.println("User rating:\n " +data[7]+"% users rated between 0 and 6");
 						System.out.println(  data[8]+"% users rated between 7 and 8");
 						System.out.println(data[9]+"% users rated between 9 and 10");	
-					}
+					//}
 				}
 					
 			}
